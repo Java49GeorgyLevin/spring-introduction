@@ -1,4 +1,4 @@
-package telran.spring.calculator;
+package telran.spring.service;
 
 import org.springframework.stereotype.Service;
 

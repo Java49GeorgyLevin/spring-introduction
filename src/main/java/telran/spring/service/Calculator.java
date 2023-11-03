@@ -1,4 +1,4 @@
-package telran.spring.calculator;
+package telran.spring.service;
 
 public interface Calculator {
 	double multiply(double op1, double op2);
