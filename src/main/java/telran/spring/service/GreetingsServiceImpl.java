@@ -15,7 +15,7 @@ public class GreetingsServiceImpl implements GreetingsService {
 	Person p124 = new Person(124l, "Sara", "Bnei Brak");
 	Person p125 = new Person(125l, "Rivka", "Petah Tikva");
 	Map<Long, Person> personsMap = new HashMap<>(Map.of(123l, p123, 124l, p124, 125l, p125));
-	Map<Long, String> greetingsMap = new HashMap<>(Map.of(p123.id(), p123.name(), p124.id(), p124.name(), p125.id(), p125.name()));
+
 	
 	Map<String, List<Person>> citiesMap = new HashMap<>();	
 	private HashMap<String, List<Person>> fillCitiesList() {		
@@ -33,34 +33,12 @@ public class GreetingsServiceImpl implements GreetingsService {
 
 
 	@Override
-	public String getGreetings(long id) {		
-		String name = greetingsMap.getOrDefault(id, "Unknown Guest");	
+	public String getGreetings(long id) {
+		Person person = personsMap.get(id);		
+		String name = person != null ? person.name() : "Unknown Guest";	
 		return "Hello, " + name;
 	}
-	@Override
-	public String addName(IdName idName) {
-		String name = greetingsMap.putIfAbsent(idName.id(), idName.name());
-		if(name != null) {
-			throw new IllegalStateException(idName.id() + " already exists");
-		}
-		return idName.name();
-	}
-	@Override
-	public String deleteName(long id) {
-		String name = greetingsMap.remove(id);
-		if(name == null) {
-			throw new IllegalStateException(id + " not found");
-		}
-		return name;
-	}
-	@Override
-	public String updateName(IdName idName) {
-		if(!greetingsMap.containsKey(idName.id())) {
-			throw new IllegalStateException(idName.id() + " not found");
-		}
-		greetingsMap.put(idName.id(), idName.name());
-		return idName.name();
-	}
+
 	@Override
 	public Person getPerson(long id) {
 		Person person = personsMap.getOrDefault(id, null);
@@ -84,8 +62,7 @@ public class GreetingsServiceImpl implements GreetingsService {
 		Person res  = personsMap.putIfAbsent(id, person);
 		if(res == null) {
 			throw new IllegalStateException(id + " already exist"); 
-		}
-		addName(new IdName(person.id(), person.name()));
+		}		
 		return res;		 
 	}
 
@@ -94,9 +71,8 @@ public class GreetingsServiceImpl implements GreetingsService {
 		Person person = personsMap.remove(id);
 		if(person == null) {
 			throw new IllegalStateException(id + " not exist");
-		}
-		deleteName(id);
-		return null;
+		}		
+		return person;
 	}
 
 	@Override
@@ -108,5 +84,4 @@ public class GreetingsServiceImpl implements GreetingsService {
 	}
 
 }
-
 

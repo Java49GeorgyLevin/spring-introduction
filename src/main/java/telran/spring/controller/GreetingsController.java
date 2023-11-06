@@ -25,23 +25,9 @@ public class GreetingsController {
 	@GetMapping("{city}")
 	 List<Person> getPersonsByCity(@PathVariable String city) {
 		 return greetingsService.getPersonsByCity(city);
-	}
+	}	
+
 	
-	//TODO update following control end point methods for HW #57 according to updated service
-	@PostMapping
-	String addName(@RequestBody IdName idName) {
-		return greetingsService.addName(idName);
-	}
-	@PutMapping
-	String updateName(@RequestBody IdName idName) {
-		return greetingsService.updateName(idName);
-	}
-	@DeleteMapping("{id}")
-	String deleteName(@PathVariable long id) {
-		return greetingsService.deleteName(id);
-	}
-	//TODO
-	//end points for getting person by ID and getting persons by city see service
 	@PostMapping
 	Person addPerson(@RequestBody Person person) {
 		return greetingsService.addPerson(person);
