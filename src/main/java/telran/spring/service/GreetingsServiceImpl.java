@@ -1,11 +1,10 @@
 package telran.spring.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-
 import org.springframework.stereotype.Service;
 
 import telran.spring.Person;
@@ -14,21 +13,31 @@ public class GreetingsServiceImpl implements GreetingsService {
 	Person p123 = new Person(123l, "David", "Tel Aviv");
 	Person p124 = new Person(124l, "Sara", "Bnei Brak");
 	Person p125 = new Person(125l, "Rivka", "Petah Tikva");
-	Map<Long, Person> personsMap = new HashMap<>(Map.of(123l, p123, 124l, p124, 125l, p125));
+	Person p126 = new Person(126l, "Izhak", "Petah Tikva");
+	Map<Long, Person> personsMap = new HashMap<>(Map.of(123l, p123, 124l, p124, 125l, p125, 126l, p126));
 
 	
-	Map<String, List<Person>> citiesMap = new HashMap<>();	
-	private HashMap<String, List<Person>> fillCitiesList() {		
-		for(Long id : personsMap.keySet()) {			
-			Person person = personsMap.get(id);
-			String city = person.city();
-			if(!citiesMap.containsKey(city)) {
-				citiesMap.put(city, List.of(person) );
-			} else {
-				citiesMap.get(city).add(person);
-			}			
+	Map<String, List<Person>> citiesMap = new HashMap<>();
+
+	
+	GreetingsServiceImpl() {	
+		for( Person person : personsMap.values()) {
+			addToCitiesMap(person);			
 		}
-		return null;
+
+	}
+	
+	private void addToCitiesMap(Person person) {
+		citiesMap.computeIfAbsent(person.city(), k -> new ArrayList<>()).add(person);
+	}
+	
+	private void removeFromCitiesMap(Person person) {
+		String city = person.city();
+		Collection<Person> col = citiesMap.get(city);
+		col.remove(person);
+		if(col.isEmpty()) {
+			citiesMap.remove(city);
+		}
 	}
 
 
@@ -41,29 +50,26 @@ public class GreetingsServiceImpl implements GreetingsService {
 
 	@Override
 	public Person getPerson(long id) {
-		Person person = personsMap.getOrDefault(id, null);
+		Person person = personsMap.get(id);
+		if(person == null) {
+			throw new IllegalStateException(id + " not exists"); 
+		}
 		return person;
 	}
 	@Override
 	public List<Person> getPersonsByCity(String city) {
-		List<Person> list = new ArrayList<>();
-		for(Entry<Long, Person> entry : personsMap.entrySet()) {
-			Person person = entry.getValue();
-			if(person.city() == city) {
-				list.add(person);
-			}			
-		}
-		return list;
+		return citiesMap.get(city);
 	}
 
 	@Override
 	public Person addPerson(Person person) {
 		long id = person.id();
 		Person res  = personsMap.putIfAbsent(id, person);
-		if(res == null) {
+		if(res != null) {
 			throw new IllegalStateException(id + " already exist"); 
-		}		
-		return res;		 
+		}
+		addToCitiesMap(person);
+		return person;		 
 	}
 
 	@Override
@@ -71,7 +77,8 @@ public class GreetingsServiceImpl implements GreetingsService {
 		Person person = personsMap.remove(id);
 		if(person == null) {
 			throw new IllegalStateException(id + " not exist");
-		}		
+		}
+		removeFromCitiesMap(person);
 		return person;
 	}
 
@@ -79,7 +86,7 @@ public class GreetingsServiceImpl implements GreetingsService {
 	public Person updatePerson(Person person) {
 		long id = person.id();
 		deletePerson(id);
-		addPerson(person);
+		addPerson(person);		
 		return null;
 	}
 
