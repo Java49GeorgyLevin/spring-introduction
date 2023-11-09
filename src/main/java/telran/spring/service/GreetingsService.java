@@ -6,15 +6,9 @@ import telran.spring.Person;
 
 public interface GreetingsService {
 	String getGreetings(long id);
-
 	Person getPerson(long id);
-
 	List<Person> getPersonsByCity(String city);
-
 	Person addPerson(Person person);
-
 	Person deletePerson(long id);
-
 	Person updatePerson(Person person);
-
 }

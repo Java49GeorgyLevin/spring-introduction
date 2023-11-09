@@ -1,7 +1,5 @@
 package telran.spring.service;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,31 +13,6 @@ public class GreetingsServiceImpl implements GreetingsService {
 	Person p125 = new Person(125l, "Rivka", "Petah Tikva");
 	Person p126 = new Person(126l, "Izhak", "Petah Tikva");
 	Map<Long, Person> personsMap = new HashMap<>(Map.of(123l, p123, 124l, p124, 125l, p125, 126l, p126));
-
-	
-	Map<String, List<Person>> citiesMap = new HashMap<>();
-
-	
-	GreetingsServiceImpl() {	
-		for( Person person : personsMap.values()) {
-			addToCitiesMap(person);			
-		}
-
-	}
-	
-	private void addToCitiesMap(Person person) {
-		citiesMap.computeIfAbsent(person.city(), k -> new ArrayList<>()).add(person);
-	}
-	
-	private void removeFromCitiesMap(Person person) {
-		String city = person.city();
-		Collection<Person> col = citiesMap.get(city);
-		col.remove(person);
-		if(col.isEmpty()) {
-			citiesMap.remove(city);
-		}
-	}
-
 
 	@Override
 	public String getGreetings(long id) {
@@ -58,7 +31,10 @@ public class GreetingsServiceImpl implements GreetingsService {
 	}
 	@Override
 	public List<Person> getPersonsByCity(String city) {
-		return citiesMap.get(city);
+		return personsMap.values().stream()
+		.filter(p -> p.city().endsWith(city))
+		.toList();
+
 	}
 
 	@Override
@@ -68,7 +44,6 @@ public class GreetingsServiceImpl implements GreetingsService {
 		if(res != null) {
 			throw new IllegalStateException(id + " already exist"); 
 		}
-		addToCitiesMap(person);
 		return person;		 
 	}
 
@@ -78,7 +53,6 @@ public class GreetingsServiceImpl implements GreetingsService {
 		if(person == null) {
 			throw new IllegalStateException(id + " not exist");
 		}
-		removeFromCitiesMap(person);
 		return person;
 	}
 
