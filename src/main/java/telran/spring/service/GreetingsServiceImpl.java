@@ -10,7 +10,11 @@ import telran.exceptions.NotFoundException;
 import telran.spring.Person;
 @Service
 public class GreetingsServiceImpl implements GreetingsService {
-    Map<Long, Person> greetingsMap = new HashMap<>();
+	Person p123 = new Person(123l, "David", "Tel Aviv", "a@a.com", "0581111111");
+	Person p124 = new Person(124l, "Sara", "Bnei Brak", "b@a.com", "0581111112");
+	Person p125 = new Person(125l, "Rivka", "Petah Tikva", "c@a.com", "0581111113");
+	Person p126 = new Person(126l, "Izhak", "Petah Tikva", "d@a.com", "0581111114");
+	Map<Long, Person> greetingsMap = new HashMap<>(Map.of(123l, p123, 124l, p124, 125l, p125, 126l, p126));
 	@Override
 	public String getGreetings(long id) {
 		

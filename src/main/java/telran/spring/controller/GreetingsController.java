@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import telran.spring.Person;
 import telran.spring.service.GreetingsService;
-import telran.spring.service.IdName;
 
 @RestController
 @RequestMapping("greetings")
@@ -18,25 +17,33 @@ import telran.spring.service.IdName;
 public class GreetingsController {
 	final GreetingsService greetingsService;
 	@GetMapping("{id}")
-	String getGreetings(@PathVariable long id) {
+	String getGreetings(@PathVariable @Valid long id) {
 		log.debug("method getGreetings, received id {}", id);
 		return greetingsService.getGreetings(id);
 	}
 	@PostMapping
 	Person addPerson(@RequestBody @Valid Person person) {
 		log.debug("method: addPerson, received {}", person);
-		return greetingsService.addPerson(person);
+		Person res =  greetingsService.addPerson(person);
+		log.debug("Method: addPerson, has add person {}", res);
+		return res;
 	}
 	@PutMapping
 	Person updatePerson(@RequestBody @Valid Person person) {
-		return greetingsService.updatePerson(person);
+		log.debug("Method: updatePerson, received person {}", person);
+		Person res = greetingsService.updatePerson(person);
+		log.debug("Method: updatePerson, person {} updated ", res);		
+		return res;
 	}
 	@DeleteMapping("{id}")
-	Person deleteName(@PathVariable long id) {
-		return greetingsService.deletePerson(id);
+	Person deleteName(@PathVariable @Valid long id) {
+		log.debug("Method: deleteName, received id {}", id);
+		Person person = greetingsService.deletePerson(id);
+		log.debug("Method: deleteName, person {} with id {} was deleted", person, id);
+		return person;
 	}
 	@GetMapping("city/{city}")
-	List<Person> getPersonsByCity(@PathVariable String city) {
+	List<Person> getPersonsByCity(@PathVariable @Valid String city) {
 		List<Person> result =  greetingsService.getPersonsByCity(city);
 		if(result.isEmpty()) {
 			log.warn("received empty list for city: {}", city);
@@ -46,8 +53,15 @@ public class GreetingsController {
 		return result;
 	}
 	@GetMapping("id/{id}")
-	Person getPerson(@PathVariable long id) {
-		return greetingsService.getPerson(id);
+	Person getPerson(@PathVariable @Valid long id) {
+		log.debug("Method: getPerson, recived id {}", id);
+		Person person = greetingsService.getPerson(id);
+		if(person == null) {
+			log.warn("no person with id {}", id);			
+		} else {
+			log.debug("person with id {}: {}", id, person);
+		}
+		return person;
 	}
 	
 }
