@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import telran.spring.Person;
 import telran.spring.service.GreetingsService;
+import telran.spring.service.IdName;
 
 @RestController
 @RequestMapping("greetings")
@@ -17,34 +18,30 @@ import telran.spring.service.GreetingsService;
 public class GreetingsController {
 	final GreetingsService greetingsService;
 	@GetMapping("{id}")
-	String getGreetings(@PathVariable @Valid long id) {
-		log.debug("method getGreetings, received id {}", id);
+	String getGreetings(@PathVariable long id) {
+		log.debug("method: getGreetings, received id {}", id);
 		return greetingsService.getGreetings(id);
 	}
 	@PostMapping
 	Person addPerson(@RequestBody @Valid Person person) {
 		log.debug("method: addPerson, received {}", person);
-		Person res =  greetingsService.addPerson(person);
-		log.debug("Method: addPerson, has add person {}", res);
-		return res;
+		return greetingsService.addPerson(person);
 	}
 	@PutMapping
 	Person updatePerson(@RequestBody @Valid Person person) {
-		log.debug("Method: updatePerson, received person {}", person);
-		Person res = greetingsService.updatePerson(person);
-		log.debug("Method: updatePerson, person {} updated ", res);		
-		return res;
+		log.debug("method: updatePerson, received {}", person);
+		return greetingsService.updatePerson(person);
 	}
 	@DeleteMapping("{id}")
-	Person deleteName(@PathVariable @Valid long id) {
-		log.debug("Method: deleteName, received id {}", id);
-		Person person = greetingsService.deletePerson(id);
-		log.debug("Method: deleteName, person {} with id {} was deleted", person, id);
-		return person;
+	Person deletePerson(@PathVariable long id) {
+		log.debug("method: deletePerson, received id {}", id);
+		return greetingsService.deletePerson(id);
 	}
 	@GetMapping("city/{city}")
-	List<Person> getPersonsByCity(@PathVariable @Valid String city) {
+	List<Person> getPersonsByCity(@PathVariable String city) {
+		log.debug("method: getPersonsByCity, received city {}", city);
 		List<Person> result =  greetingsService.getPersonsByCity(city);
+		
 		if(result.isEmpty()) {
 			log.warn("received empty list for city: {}", city);
 		} else {
@@ -53,15 +50,9 @@ public class GreetingsController {
 		return result;
 	}
 	@GetMapping("id/{id}")
-	Person getPerson(@PathVariable @Valid long id) {
-		log.debug("Method: getPerson, recived id {}", id);
-		Person person = greetingsService.getPerson(id);
-		if(person == null) {
-			log.warn("no person with id {}", id);			
-		} else {
-			log.debug("person with id {}: {}", id, person);
-		}
-		return person;
+	Person getPerson(@PathVariable long id) {
+		log.debug("method: getPerson, received id {}", id);
+		return greetingsService.getPerson(id);
 	}
 	
 }

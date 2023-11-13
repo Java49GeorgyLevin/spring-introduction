@@ -4,29 +4,49 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 import telran.exceptions.NotFoundException;
 import telran.spring.Person;
 @Service
+@Slf4j
 public class GreetingsServiceImpl implements GreetingsService {
-	Person p123 = new Person(123l, "David", "Tel Aviv", "a@a.com", "0581111111");
-	Person p124 = new Person(124l, "Sara", "Bnei Brak", "b@a.com", "0581111112");
-	Person p125 = new Person(125l, "Rivka", "Petah Tikva", "c@a.com", "0581111113");
-	Person p126 = new Person(126l, "Izhak", "Petah Tikva", "d@a.com", "0581111114");
-	Map<Long, Person> greetingsMap = new HashMap<>(Map.of(123l, p123, 124l, p124, 125l, p125, 126l, p126));
+    Map<Long, Person> greetingsMap = new HashMap<>();
+    @Value("${app.greeting.message:Hello}")
+    String greetingMessage;
+    @Value("${app.unknown.name:unknown guest}")
+    String unknownName;
+    @Value("${app.file.name:persons.data}")
+    String fileName;
 	@Override
 	public String getGreetings(long id) {
 		
 		Person person =  greetingsMap.get(id);
-		String name = person == null ? "Unknown guest" : person.name();
-		return "Hello, " + name;
+		String name = "";
+		if (person == null) {
+			name = unknownName;
+			log.warn("person with id {} not found", id);
+		} else {
+			name = person.name();
+			log.debug("person name is {}", name);
+		}
+		return String.format("%s, %s", greetingMessage, name);
 	}
 	
 	@Override
 	public Person getPerson(long id) {
 		
-		return greetingsMap.get(id);
+		Person person = greetingsMap.get(id);
+		if(person == null) {
+			log.warn("person with id {} not found", id);
+		} else {
+			log.debug("persons with id {} exists", id);
+		}
+		return person;
 	}
 	@Override
 	public List<Person> getPersonsByCity(String city) {
@@ -42,6 +62,7 @@ public class GreetingsServiceImpl implements GreetingsService {
 			throw new IllegalStateException(String.format("person with id %d already exists", id));
 		}
 		 greetingsMap.put(id, person);
+		 log.debug("person with id {} has been saved", id);
 		 return person;
 	}
 	@Override
@@ -49,7 +70,9 @@ public class GreetingsServiceImpl implements GreetingsService {
 		if (!greetingsMap.containsKey(id) ){
 			throw new NotFoundException(String.format("person with id %d doesn't exist", id));
 		}
-		return greetingsMap.remove(id);
+		Person person =  greetingsMap.remove(id);
+		log.debug("person with id {} has been removed", person.id());
+		return person;
 	}
 	@Override
 	public Person updatePerson(Person person) {
@@ -58,7 +81,31 @@ public class GreetingsServiceImpl implements GreetingsService {
 			throw new NotFoundException(String.format("person with id %d doesn't exist", id));
 		}
 		greetingsMap.put(id, person);
+		log.debug("person with id {} has been update", person.id());
 		return person;
+	}
+
+	@Override
+	public void save(String fileName) {
+		// TODO saving persons data into ObjectOutputStream
+		log.info("persons data have been saved");
+		
+	}
+
+	@Override
+	public void restore(String fileName) {
+		// TODO restoring from file using ObjectInputStream
+		log.info("restored from file");
+		
+	}
+	@PostConstruct
+	void restoreFromFile() {
+		restore(fileName);
+		
+	}
+	@PreDestroy
+	void saveToFile() {
+		save(fileName);
 	}
 
 }
