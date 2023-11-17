@@ -1,6 +1,7 @@
 package telran.spring;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -16,10 +17,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import telran.spring.controller.GreetingsController;
 import telran.spring.service.GreetingsService;
-
-record PersonIdAsString(String id, String name, String city, String email, String phone) {
+record PersonIdString(String id, String name, String city, String mail, String phone) {
+	
 }
-
 @WebMvcTest
 public class GreetingsControllerTest {
     @Autowired //this annotation allows dependency injection inside following field 
@@ -28,22 +28,21 @@ public class GreetingsControllerTest {
     GreetingsService greetingsService;
     @Autowired
     MockMvc mockMvc; //imitator of Web Server
+    Person personNormal = new Person(123, "Vasya", "Rehovot", "vasya@gmail.com",
+    		"054-1234567");
+    Person personNormalUpdated = new Person(123, "Vasya", "Lod", "vasya@gmail.com",
+    		"054-1234567");
+    Person personWrongPhone = new Person(124, "Vasya", "Rehovot", "vasya@gmail.com",
+    		"54-1234567");
+    Person personWrongCity = new Person(124, "Vasya", null, "vasya@gmail.com",
+    		"+972-54-1234567");
+    Person personWrongName = new Person(123, "as", "Rehovot", "vasya@gmail.com",
+    		"054-1234567");
+    PersonIdString personWrongId = new PersonIdString("abc", "Vasya", "Rehovot", "vasya@gmail.com",
+    		"054-1234567");
+    Person personWrongMail = new Person(123, "Vasya", "Rehovot", "vasya",
+    		"054-1234567");
     
-
-    Person personNormal = new Person(223, "Vasya", "Rehovot", "vasya@gmail.com",
-    		"054-1234567");
-    Person personNormal_2 = new Person(223, "Petya", "Rehovot", "petya@gmail.com",
-    		"054-1234567");
-    Person personWrongPhone = new Person(224, "Vasya", "Rehovot", "vasya@gmail.com",
-    		"54-1234567");    
-    Person personWrongEmail = new Person(225, "Vasya", "Rehovot", "vasya-gmail.com",
-    		"054-1234567");
-    Person personWrongName = new Person(226, "Vasya123", "Rehovot", "vasya@gmail.com",
-    		"054-1234567");
-    Person personEmptyCity = new Person(227, "Vasya", "", "vasya@gmail.com",
-    		"054-1234567");
-    PersonIdAsString personWrongId = new PersonIdAsString("vasya", "Vasya", "Rehovot", "vasya@gmail.com",
-    		"054-1234567");
     @Autowired
     ObjectMapper objectMapper;
      @Test
@@ -51,14 +50,32 @@ public class GreetingsControllerTest {
     	 assertNotNull(controller);
     	 assertNotNull(greetingsService);
     	 assertNotNull(mockMvc);
-    	 assertNotNull(objectMapper);    	 
+    	 assertNotNull(objectMapper);
+    	 
      }
      @Test
      void normalFlowAddPerson() throws Exception{
-    	 mockMvc.perform(post("http://localhost:8080/greetings")
+    	 when(greetingsService.addPerson(personNormal)).thenReturn(personNormal);
+    	 String personJson = objectMapper.writeValueAsString(personNormal);
+    	 String response = mockMvc.perform(post("http://localhost:8080/greetings")
     			 .contentType(MediaType.APPLICATION_JSON)
-    			 .content(objectMapper.writeValueAsString(personNormal)))
-    	 .andDo(print()).andExpect(status().isOk());
+    			 .content(personJson))
+    	 .andDo(print()).andExpect(status().isOk())
+    	 .andReturn().getResponse().getContentAsString();
+    	 assertEquals(personJson, response);
+     }
+     @Test
+     void alreadyExistsAddPerson() throws Exception{
+    	 String exceptionMessage = "already exists";
+    	 when(greetingsService.addPerson(personNormal))
+    	 .thenThrow(new IllegalStateException(exceptionMessage));
+    	 String personJson = objectMapper.writeValueAsString(personNormal);
+    	 String response = mockMvc.perform(post("http://localhost:8080/greetings")
+    			 .contentType(MediaType.APPLICATION_JSON)
+    			 .content(personJson))
+    	 .andDo(print()).andExpect(status().isBadRequest())
+    	 .andReturn().getResponse().getContentAsString();
+    	 assertEquals(exceptionMessage, response);
      }
      @Test
      void addPersonWrongPhone() throws Exception{
@@ -70,58 +87,64 @@ public class GreetingsControllerTest {
     	 assertEquals("not Israel mobile phone",response);
      }
      @Test
-     void addPersonWrongEmail() throws Exception{
+     void addPersonWrongMail() throws Exception{
+    	 
+    	String response = mockMvc.perform(post("http://localhost:8080/greetings")
+    			 .contentType(MediaType.APPLICATION_JSON)
+    			 .content(objectMapper.writeValueAsString(personWrongMail)))
+    	 .andDo(print()).andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+    	 assertEquals("must be a well-formed email address",response);
+     }
+     @Test
+     void addPersonWrongCity() throws Exception{
     	 String response = mockMvc.perform(post("http://localhost:8080/greetings")
     			 .contentType(MediaType.APPLICATION_JSON)
-    			 .content(objectMapper.writeValueAsString(personWrongEmail)))
-    	 .andDo(print()).andExpect(status().isBadRequest())
-    	 .andReturn().getResponse().getContentAsString();
-    	 assertEquals("must be a well-formed email address",response);
+    			 .content(objectMapper.writeValueAsString(personWrongCity)))
+    	 .andDo(print()).andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+    	 assertEquals("must not be empty",response);
      }
      @Test
      void addPersonWrongName() throws Exception{
     	 String response = mockMvc.perform(post("http://localhost:8080/greetings")
     			 .contentType(MediaType.APPLICATION_JSON)
     			 .content(objectMapper.writeValueAsString(personWrongName)))
-    	 .andDo(print()).andExpect(status().isBadRequest())
-    	 .andReturn().getResponse().getContentAsString();
+    	 .andDo(print()).andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
     	 assertEquals("Wrong name structure",response);
      }
      @Test
-     void addPersonIdAsString() throws Exception {
+     void addPersonWrongId() throws Exception{
     	 String response = mockMvc.perform(post("http://localhost:8080/greetings")
     			 .contentType(MediaType.APPLICATION_JSON)
     			 .content(objectMapper.writeValueAsString(personWrongId)))
-    	 .andDo(print()).andExpect(status().isBadRequest())
-    	 .andReturn().getResponse().getContentAsString();
-    	 assertEquals("JSON parse error: Cannot deserialize value of type `long` from String \"vasya\": not a valid `long` value", response);
-     }
-     @Test
-     void addPersonEmptyCity() throws Exception{
-    	 String response = mockMvc.perform(post("http://localhost:8080/greetings")
-    			 .contentType(MediaType.APPLICATION_JSON)
-    			 .content(objectMapper.writeValueAsString(personEmptyCity)))
-    	 .andDo(print()).andExpect(status().isBadRequest())
-    	 .andReturn().getResponse().getContentAsString();
-    	 assertEquals("must not be empty",response);
+    	 .andDo(print()).andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+	 assertEquals("JSON parse error: Cannot deserialize value of type `long` from String \"abc\": not a valid `long` value",response);
      }
      @Test
      void updatePersonTest() throws Exception {
     	 mockMvc.perform(put("http://localhost:8080/greetings")
     			 .contentType(MediaType.APPLICATION_JSON)
-    			 .content(objectMapper.writeValueAsString(personNormal_2)))
-    	 .andDo(print()).andExpect(status().isOk()); 
-     }     
-     
+    			 .content(objectMapper.writeValueAsString(personNormalUpdated)))
+    	 .andDo(print()).andExpect(status().isOk());
+     }
      @Test
      void getPersonTest() throws Exception {
-    	 mockMvc.perform(get("http://localhost:8080/greetings/id/223"))    	 
-    	 .andDo(print()).andExpect(status().isOk());    	 
-     }     
+    	 mockMvc.perform(get("http://localhost:8080/greetings/id/123"))
+    	 .andDo(print()).andExpect(status().isOk());
+     }
+     @Test
+     void getGreetingsTest() throws Exception {
+    	 mockMvc.perform(get("http://localhost:8080/greetings/123"))
+    	 .andDo(print()).andExpect(status().isOk());
+     }
+     @Test
+     void getPersonsByCityTest() throws Exception {
+    	 mockMvc.perform(get("http://localhost:8080/greetings/city/Rehovot"))
+    	 .andDo(print()).andExpect(status().isOk());
+     }
      @Test
      void deletePersonTest() throws Exception {
-    	 mockMvc.perform(delete("http://localhost/greetings/223"))
-    	 .andDo(print()).andExpect(status().isOk());    	 
+    	 mockMvc.perform(delete("http://localhost:8080/greetings/123"))
+    	 .andDo(print()).andExpect(status().isOk());
      }
      
 }
