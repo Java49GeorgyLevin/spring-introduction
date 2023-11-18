@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
+import lombok.Value;
 import telran.exceptions.NotFoundException;
 import telran.spring.service.GreetingsService;
 @SpringBootTest
@@ -25,6 +27,10 @@ GreetingsService greetingsService;
     		"054-1234567");
 	Person personNotFound = new Person(500, "Vasya", "Rehovot", "vasya@gmail.com",
     		"054-1234567");
+	Person personNormal2 = new Person(1234, "Wasya", "Rehovot", "wasya@gmail.com",
+	    		"054-1234567");
+	Person personNormal3 = new Person(12345, "Yasya", "Rehovot", "yasya@gmail.com",
+	    		"054-1234567");
 	@BeforeAll
 	static void deleteFile() throws IOException {
 		Files.deleteIfExists(Path.of("test.data"));
@@ -72,6 +78,25 @@ GreetingsService greetingsService;
 	void persistenceTest() {
 		assertEquals(personNormalUpdated, greetingsService.getPerson(123));
 	}
-	
+	@Test
+	@Order(9)
+	void deleteNotExistTest() {
+		assertThrowsExactly(NotFoundException.class, () -> greetingsService.deletePerson(500));
+	}
+	@Test
+	@Order(10)
+	void getByCityTest() {
+		greetingsService.addPerson(personNormal2);
+		greetingsService.addPerson(personNormal3);
+		String city = "Rehovot";
+		List<Person> list = greetingsService.getPersonsByCity(city);
+		assertEquals(List.of(personNormal2, personNormal3), list);		
+	}
+	@Test
+	@Order(11)
+	void getByNotExistCityTest() {
+		String city = "Bnei Brak";
+		assertEquals(List.of(), greetingsService.getPersonsByCity(city));
+	}
 
 }
