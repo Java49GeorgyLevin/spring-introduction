@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 
 import telran.spring.calculator.dto.OperationData;
 @Service
-public class ArithmeticCalculatorService implements CalculatorService {
+public class PercentCalculatorService implements CalculatorService {
 
 	@Override
 	public String calculate(OperationData operationData) {
@@ -12,19 +12,17 @@ public class ArithmeticCalculatorService implements CalculatorService {
 		double[] operands = twoOperands.getOperands(operationData);
 		String operation = operationData.operation();
 		return switch(operation) {
-			case "sum" -> Double.toString(operands[0] + operands[1]); 
-			case "subtract" -> Double.toString(operands[0] + operands[1]);
-			case "multiply" -> Double.toString(operands[0] * operands[1]); 
-			case "divide" -> Double.toString(operands[0] / operands[1]); 
-		default -> throw new IllegalArgumentException(operation + " is unsupported operation"); 
-		
+		case "per" -> Double.toString(operands[1] / 100 * operands [0]);
+		case "per mille" -> Double.toString(operands[1] / 1000 * operands [0]);
+		case "of" -> Double.toString(operands[0] /operands [1]  * 100)+"%";
+		default -> throw new IllegalArgumentException(String.format("This %s must be \"per\", or \"per mille\", or \"of\"", operation));
 		};
 	}
 
 	@Override
 	public String getCalculationType() {
 		
-		return "arithmetic";
+		return "percent";
 	}
 
 }
